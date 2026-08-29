@@ -1,0 +1,160 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Admin — Solicitações de Acesso</title>
+<style>
+  :root{
+    --bg:#0d1210; --bg-elev:#141a17; --ink:#ece7db; --ink-dim:#9a988c;
+    --brass:#bd935a; --line:rgba(236,231,219,0.14); --line-strong:rgba(236,231,219,0.28);
+  }
+  *{ box-sizing:border-box; }
+  body{ margin:0; background:var(--bg); color:var(--ink); font-family: -apple-system, Inter, sans-serif; padding: 32px; }
+  h1{ font-size: 20px; margin: 0 0 4px; }
+  p.sub{ color: var(--ink-dim); font-size: 13px; margin: 0 0 24px; }
+  .login{ max-width: 360px; margin: 80px auto; text-align:center; }
+  .login input{ width:100%; padding:12px 14px; border-radius:8px; border:1px solid var(--line-strong); background:var(--bg-elev); color:var(--ink); margin-bottom:12px; font-size:14px; }
+  .login button, .toolbar button{
+    background: var(--brass); color: var(--bg); border:none; border-radius:8px;
+    padding: 10px 18px; font-size:13px; font-weight:600; cursor:pointer;
+  }
+  .toolbar{ display:flex; gap:10px; margin-bottom:20px; flex-wrap:wrap; align-items:center; }
+  .toolbar select{ background:var(--bg-elev); color:var(--ink); border:1px solid var(--line-strong); border-radius:8px; padding:9px 10px; font-size:13px; }
+  table{ width:100%; border-collapse: collapse; font-size: 13.5px; }
+  th, td{ text-align:left; padding: 10px 12px; border-bottom: 1px solid var(--line); }
+  th{ color: var(--ink-dim); font-weight:600; font-size:11px; text-transform:uppercase; letter-spacing:.05em; }
+  .badge{ padding:3px 9px; border-radius:999px; font-size:11px; text-transform:uppercase; letter-spacing:.03em; }
+  .badge.pendente{ background: rgba(189,147,90,0.18); color: var(--brass); }
+  .badge.aprovado{ background: rgba(90,189,120,0.18); color: #7fd39a; }
+  .badge.recusado{ background: rgba(189,90,90,0.18); color: #e08a8a; }
+  .row-actions button{
+    background:transparent; border:1px solid var(--line-strong); color: var(--ink);
+    border-radius:6px; padding:5px 10px; font-size:11px; cursor:pointer; margin-right:6px;
+  }
+  .row-actions button:hover{ border-color: var(--brass); color: var(--brass); }
+  .empty, .error{ color: var(--ink-dim); padding: 40px 0; text-align:center; }
+  a.export{ color: var(--brass); font-size:13px; text-decoration:none; margin-left:auto; }
+</style>
+</head>
+<body>
+
+<div id="loginView" class="login">
+  <h1>Acesso administrativo</h1>
+  <p class="sub">Informe a URL da API e o token de admin definidos no servidor.</p>
+  <input id="apiUrl" placeholder="http://localhost:3001" value="http://localhost:3001">
+  <input id="token" placeholder="Admin token" type="password">
+  <button onclick="doLogin()">Entrar</button>
+  <div id="loginError" class="error" style="display:none;"></div>
+</div>
+
+<div id="panelView" style="display:none;">
+  <h1>Solicitações de acesso</h1>
+  <p class="sub" id="totalCount"></p>
+  <div class="toolbar">
+    <select id="filterRole" onchange="load()">
+      <option value="">Todos os tipos</option>
+      <option value="profissional">Profissional</option>
+      <option value="empresa">Empresa</option>
+    </select>
+    <select id="filterStatus" onchange="load()">
+      <option value="">Todos os status</option>
+      <option value="pendente">Pendente</option>
+      <option value="aprovado">Aprovado</option>
+      <option value="recusado">Recusado</option>
+    </select>
+    <a class="export" id="exportLink" href="#" target="_blank">Exportar CSV ↓</a>
+  </div>
+  <table id="table">
+    <thead>
+      <tr><th>Nome</th><th>E-mail</th><th>LinkedIn</th><th>Tipo</th><th>Pagaria?</th><th>Valor justo</th><th>Status</th><th>Data</th><th></th></tr>
+    </thead>
+    <tbody id="tbody"></tbody>
+  </table>
+  <div id="emptyState" class="empty" style="display:none;">Nenhuma solicitação encontrada.</div>
+</div>
+
+<script>
+  let API_URL = '';
+  let TOKEN = '';
+
+  function doLogin(){
+    API_URL = document.getElementById('apiUrl').value.trim().replace(/\/$/, '');
+    TOKEN = document.getElementById('token').value.trim();
+    document.getElementById('loginError').style.display = 'none';
+    load(true);
+  }
+
+  async function load(isLogin){
+    const role = document.getElementById('filterRole').value;
+    const status = document.getElementById('filterStatus').value;
+    const params = new URLSearchParams({ token: TOKEN });
+    if (role) params.set('role', role);
+    if (status) params.set('status', status);
+
+    try {
+      const res = await fetch(`${API_URL}/api/access-requests?${params}`);
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.error || 'Erro ao carregar dados.');
+
+      document.getElementById('loginView').style.display = 'none';
+      document.getElementById('panelView').style.display = 'block';
+      document.getElementById('exportLink').href = `${API_URL}/api/access-requests/export.csv?token=${TOKEN}`;
+      document.getElementById('totalCount').textContent = `${data.total} solicitação(ões)`;
+      renderRows(data.requests);
+    } catch (err) {
+      if (isLogin) {
+        const el = document.getElementById('loginError');
+        el.textContent = err.message || 'Não foi possível conectar à API.';
+        el.style.display = 'block';
+      }
+    }
+  }
+
+  const willingnessLabels = { sim: 'Sim', talvez: 'Talvez', nao: 'Não' };
+
+  function renderRows(requests){
+    const tbody = document.getElementById('tbody');
+    const empty = document.getElementById('emptyState');
+    tbody.innerHTML = '';
+    empty.style.display = requests.length ? 'none' : 'block';
+
+    requests.forEach(r => {
+      const tr = document.createElement('tr');
+      const date = new Date(r.createdAt).toLocaleString('pt-BR');
+      tr.innerHTML = `
+        <td>${escapeHtml(r.nome)}</td>
+        <td>${escapeHtml(r.email)}</td>
+        <td>${r.linkedin ? `<a href="https://${escapeHtml(r.linkedin.replace(/^https?:\/\//,''))}" target="_blank" style="color:inherit;">${escapeHtml(r.linkedin)}</a>` : '—'}</td>
+        <td style="text-transform:capitalize;">${escapeHtml(r.role)}</td>
+        <td>${escapeHtml(willingnessLabels[r.willingness] || '—')}</td>
+        <td>${escapeHtml(r.fairPrice) || '—'}</td>
+        <td><span class="badge ${r.status}">${escapeHtml(r.status)}</span></td>
+        <td>${date}</td>
+        <td class="row-actions">
+          <button onclick="updateStatus('${r.id}','aprovado')">Aprovar</button>
+          <button onclick="updateStatus('${r.id}','recusado')">Recusar</button>
+        </td>
+      `;
+      tbody.appendChild(tr);
+    });
+  }
+
+  async function updateStatus(id, status){
+    await fetch(`${API_URL}/api/access-requests/${id}?token=${TOKEN}`, {
+      method: 'PATCH',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ status }),
+    });
+    load();
+  }
+
+  function escapeHtml(str){
+    const d = document.createElement('div');
+    d.textContent = str || '';
+    return d.innerHTML;
+  }
+</script>
+
+</body>
+</html>

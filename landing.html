@@ -1,0 +1,647 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Acesso Restrito — Rede Profissional Privada</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:ital,opsz,wght@0,9..144,300;0,9..144,440;0,9..144,560;1,9..144,440&family=Inter:wght@400;500;600&family=IBM+Plex+Mono:wght@400;500&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --bg: #0d1210;
+    --bg-elev: #141a17;
+    --ink: #ece7db;
+    --ink-dim: #9a988c;
+    --ink-faint: #6c6a60;
+    --brass: #bd935a;
+    --brass-bright: #d6ab72;
+    --line: rgba(236,231,219,0.14);
+    --line-strong: rgba(236,231,219,0.28);
+    --serif: 'Fraunces', serif;
+    --sans: 'Inter', sans-serif;
+    --mono: 'IBM Plex Mono', monospace;
+  }
+
+  *{ box-sizing: border-box; }
+  html{ scroll-behavior: smooth; }
+  body{
+    margin:0;
+    background: var(--bg);
+    color: var(--ink);
+    font-family: var(--sans);
+    line-height: 1.5;
+    -webkit-font-smoothing: antialiased;
+  }
+
+  .wrap{ max-width: 1080px; margin: 0 auto; padding: 0 32px; }
+
+  /* Texture: faint vertical hairlines like a ledger/membership roster */
+  .roster-bg{
+    position: fixed; inset:0; z-index:0; pointer-events:none;
+    background-image: repeating-linear-gradient(90deg, transparent 0 119px, var(--line) 119px 120px);
+    opacity: 0.35;
+  }
+
+  header, main, footer{ position: relative; z-index: 1; }
+
+  .eyebrow{
+    font-family: var(--mono);
+    font-size: 12px;
+    letter-spacing: 0.18em;
+    text-transform: uppercase;
+    color: var(--brass);
+    display:flex; align-items:center; gap:10px;
+  }
+  .eyebrow::before{
+    content:''; width:6px; height:6px; border-radius:50%;
+    background: var(--brass); box-shadow: 0 0 8px var(--brass);
+    animation: pulse 2.4s ease-in-out infinite;
+  }
+  @keyframes pulse{ 0%,100%{opacity:1} 50%{opacity:.35} }
+
+  /* ---------- HERO ---------- */
+  .hero{
+    border-bottom: 1px solid var(--line);
+    padding: 96px 0 72px;
+  }
+  .hero-rule-top{
+    border-top: 1px solid var(--line-strong);
+    padding-top: 28px;
+    margin-top: 28px;
+  }
+  .hero-inner{ max-width: 760px; }
+  h1{
+    font-family: var(--serif);
+    font-weight: 440;
+    font-size: clamp(34px, 5.2vw, 58px);
+    line-height: 1.08;
+    letter-spacing: -0.01em;
+    margin: 22px 0 22px;
+    color: var(--ink);
+  }
+  .hero p.lede{
+    font-size: 17px;
+    color: var(--ink-dim);
+    max-width: 540px;
+    margin: 0 0 36px;
+  }
+  .hero p.lede strong{ color: var(--ink); font-weight: 500; }
+
+  .stamp-line{
+    font-family: var(--serif);
+    font-style: italic;
+    font-size: 19px;
+    color: var(--ink);
+    margin: 26px 0 36px;
+    padding-left: 18px;
+    border-left: 2px solid var(--brass);
+  }
+  .stamp-line span{ display:block; color: var(--ink-dim); font-style: normal; font-family: var(--sans); font-size: 14px; margin-top: 4px;}
+
+  .btn-seal{
+    font-family: var(--mono);
+    font-size: 13px;
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+    color: var(--bg);
+    background: linear-gradient(180deg, var(--brass-bright), var(--brass));
+    border: none;
+    padding: 16px 30px;
+    border-radius: 999px;
+    cursor: pointer;
+    display: inline-flex;
+    align-items: center;
+    gap: 10px;
+    box-shadow: 0 1px 0 rgba(255,255,255,0.25) inset, 0 8px 20px -8px rgba(189,147,90,0.6);
+    transition: transform .15s ease, box-shadow .15s ease;
+  }
+  .btn-seal:hover{ transform: translateY(-1px); box-shadow: 0 1px 0 rgba(255,255,255,0.3) inset, 0 12px 26px -8px rgba(189,147,90,0.75); }
+  .btn-seal:active{ transform: translateY(1px) scale(0.98); }
+  .btn-seal svg{ width:14px; height:14px; }
+
+  .meta-row{
+    margin-top: 22px;
+    font-family: var(--mono);
+    font-size: 12px;
+    color: var(--ink-faint);
+    letter-spacing: 0.04em;
+  }
+
+  /* ---------- SECTION SHELL ---------- */
+  section{ padding: 76px 0; border-bottom: 1px solid var(--line); }
+  .section-head{
+    display:flex; justify-content: space-between; align-items: baseline;
+    gap: 24px; margin-bottom: 40px; flex-wrap: wrap;
+  }
+  .tag{
+    font-family: var(--mono); font-size: 11px; letter-spacing: .14em;
+    text-transform: uppercase; color: var(--ink-faint);
+    border: 1px solid var(--line-strong); border-radius: 999px;
+    padding: 5px 12px;
+  }
+  h2{
+    font-family: var(--serif);
+    font-weight: 440;
+    font-size: clamp(24px, 3.2vw, 34px);
+    margin: 0;
+    max-width: 620px;
+    line-height: 1.2;
+  }
+
+  /* ---------- POR QUE ---------- */
+  .why-grid{
+    display: grid; grid-template-columns: 1fr 1fr; gap: 56px;
+  }
+  .why-grid p{ color: var(--ink-dim); font-size: 15.5px; margin: 0 0 16px; }
+  .why-grid .lead-quote{
+    font-family: var(--serif); font-size: 22px; color: var(--ink);
+    line-height: 1.4;
+  }
+
+  .callout{
+    text-align: center; padding: 88px 0; border-bottom: 1px solid var(--line);
+  }
+  .callout p.small{
+    font-family: var(--mono); font-size: 12px; letter-spacing: .16em;
+    text-transform: uppercase; color: var(--ink-faint); margin: 0 0 20px;
+  }
+  .callout h3{
+    font-family: var(--serif); font-weight: 440;
+    font-size: clamp(22px, 4vw, 40px);
+    max-width: 780px; margin: 0 auto; line-height: 1.3;
+  }
+  .callout h3 em{ font-style: italic; color: var(--brass-bright); }
+
+  /* ---------- TRACKS (membership cards) ---------- */
+  .tracks{
+    display: grid; grid-template-columns: 1fr 1fr; gap: 24px;
+  }
+  .card{
+    background: var(--bg-elev);
+    border: 1px solid var(--line-strong);
+    border-radius: 14px;
+    padding: 32px;
+    position: relative;
+    overflow: hidden;
+  }
+  .card::before{
+    content:'';
+    position:absolute; left:0; right:0; top:56px;
+    border-top: 1px dashed var(--line-strong);
+  }
+  .card .punch{
+    position:absolute; top:50px; width:12px; height:12px; border-radius:50%;
+    background: var(--bg); border: 1px solid var(--line-strong);
+  }
+  .card .punch.l{ left: -6px; }
+  .card .punch.r{ right: -6px; }
+  .card-tag{
+    font-family: var(--mono); font-size: 11px; letter-spacing: .14em;
+    color: var(--brass); text-transform: uppercase; margin-bottom: 34px;
+    display:block;
+  }
+  .card h4{
+    font-family: var(--serif); font-weight: 440; font-size: 22px;
+    margin: 12px 0 12px;
+  }
+  .card p{ color: var(--ink-dim); font-size: 14.5px; margin:0; }
+  .card .arrow{ color: var(--brass); }
+
+  /* ---------- QUEM PODE ENTRAR ---------- */
+  .criteria{
+    display: grid; grid-template-columns: 1.1fr 1fr; gap: 56px; align-items: start;
+  }
+  .criteria p.big{
+    font-family: var(--serif); font-size: 21px; line-height: 1.45; color: var(--ink);
+    max-width: 480px;
+  }
+  .criteria-list{ list-style:none; margin:0; padding:0; }
+  .criteria-list li{
+    display:flex; gap:14px; padding: 16px 0; border-top: 1px solid var(--line);
+    color: var(--ink-dim); font-size: 14.5px;
+  }
+  .criteria-list li:last-child{ border-bottom: 1px solid var(--line); }
+  .criteria-list li .mark{ color: var(--brass); font-family: var(--mono); flex-shrink:0; }
+
+  /* ---------- FORM ---------- */
+  .form-section{ border-bottom: none; padding-bottom: 100px; }
+  .form-card{
+    background: var(--bg-elev);
+    border: 1px solid var(--line-strong);
+    border-radius: 18px;
+    padding: 48px;
+    max-width: 620px;
+    margin: 0 auto;
+    position: relative;
+  }
+  .form-card .ticket-notch{
+    position:absolute; top:50%; width:22px; height:22px; border-radius:50%;
+    background: var(--bg); transform: translateY(-50%);
+  }
+  .form-card .ticket-notch.l{ left:-11px; }
+  .form-card .ticket-notch.r{ right:-11px; }
+  .form-head{ text-align:center; margin-bottom: 34px; }
+  .form-head h3{
+    font-family: var(--serif); font-weight: 440; font-size: 26px; margin: 10px 0 10px;
+  }
+  .form-head p{ color: var(--ink-dim); font-size: 14.5px; margin:0; max-width: 440px; margin: 0 auto;}
+
+  .role-toggle{
+    display:flex; gap:10px; margin-bottom: 24px;
+  }
+  .role-toggle label{
+    flex:1; text-align:center; font-family: var(--mono); font-size: 12px;
+    letter-spacing: .08em; text-transform: uppercase; color: var(--ink-dim);
+    border: 1px solid var(--line-strong); border-radius: 10px; padding: 13px 10px;
+    cursor:pointer; transition: all .15s ease; position:relative;
+  }
+  .role-toggle input{ position:absolute; opacity:0; }
+  .role-toggle input:checked + span{ color: var(--bg); }
+  .role-toggle label:has(input:checked){
+    background: var(--brass); border-color: var(--brass); color: var(--bg);
+  }
+
+  .field{ margin-bottom: 18px; }
+  .field label{
+    display:block; font-family: var(--mono); font-size: 11px;
+    letter-spacing: .1em; text-transform: uppercase; color: var(--ink-faint);
+    margin-bottom: 8px;
+  }
+  .field input{
+    width:100%; background: var(--bg); border: 1px solid var(--line-strong);
+    border-radius: 8px; padding: 13px 14px; color: var(--ink); font-family: var(--sans);
+    font-size: 14.5px; outline:none; transition: border-color .15s ease;
+  }
+  .field input:focus{ border-color: var(--brass); }
+  .field input::placeholder{ color: var(--ink-faint); }
+
+  .form-card .btn-seal{ width:100%; justify-content:center; margin-top: 8px; }
+  .form-card .btn-seal:disabled{ cursor: not-allowed; }
+
+  .form-error{
+    display:none; background: rgba(189,60,60,0.1); border: 1px solid rgba(189,60,60,0.4);
+    color: #e0a3a3; font-size: 13px; border-radius: 8px; padding: 10px 14px; margin-bottom: 14px;
+  }
+
+  .form-step.hide{ display:none; }
+  .step-eyebrow{
+    font-family: var(--mono); font-size: 11px; letter-spacing: .14em; text-transform: uppercase;
+    color: var(--brass); margin: 0 0 22px;
+  }
+  .field-group{ margin-bottom: 22px; }
+  .group-label{
+    display:block; font-family: var(--serif); font-size: 16.5px; line-height:1.4;
+    color: var(--ink); margin-bottom: 16px;
+  }
+  .pay-toggle{ display:flex; flex-direction:column; gap:10px; }
+  .pay-toggle label{
+    display:flex; align-items:center; gap:12px; font-size: 14.5px; color: var(--ink-dim);
+    border: 1px solid var(--line-strong); border-radius: 10px; padding: 14px 16px;
+    cursor:pointer; transition: all .15s ease;
+  }
+  .pay-toggle label:has(input:checked){
+    border-color: var(--brass); background: rgba(189,147,90,0.08); color: var(--ink);
+  }
+  .pay-toggle input{
+    appearance:none; width:16px; height:16px; border-radius:50%; border:1px solid var(--line-strong);
+    flex-shrink:0; position:relative; margin:0;
+  }
+  .pay-toggle input:checked{ border-color: var(--brass); }
+  .pay-toggle input:checked::after{
+    content:''; position:absolute; inset:3px; border-radius:50%; background: var(--brass);
+  }
+
+  .step2-actions{ display:flex; gap:12px; align-items:center; }
+  .btn-ghost{
+    background:transparent; border:1px solid var(--line-strong); color: var(--ink-dim);
+    font-family: var(--mono); font-size: 12px; letter-spacing:.06em; text-transform:uppercase;
+    padding: 15px 20px; border-radius: 999px; cursor:pointer; transition: all .15s ease;
+  }
+  .btn-ghost:hover{ border-color: var(--ink-dim); color: var(--ink); }
+  .step2-actions .btn-seal{ flex:1; }
+
+  .form-foot{
+    margin-top: 26px; padding-top: 22px; border-top: 1px solid var(--line);
+    font-size: 12.5px; color: var(--ink-faint); text-align:center; line-height:1.6;
+  }
+
+  .confirm{
+    display:none; text-align:center; padding: 20px 0 4px;
+  }
+  .confirm.show{ display:block; }
+  .confirm .check{
+    width:44px; height:44px; border-radius:50%; border:1px solid var(--brass);
+    display:flex; align-items:center; justify-content:center; margin: 0 auto 18px;
+    color: var(--brass);
+  }
+  .confirm h4{ font-family: var(--serif); font-weight: 440; font-size: 20px; margin: 0 0 8px; }
+  .confirm p{ color: var(--ink-dim); font-size: 14px; margin:0; }
+  .form-fields.hide{ display:none; }
+
+  footer{ padding: 40px 0; text-align:center; }
+  footer p{ font-family: var(--mono); font-size: 11px; color: var(--ink-faint); letter-spacing: .08em; }
+
+  .reveal{ opacity:0; transform: translateY(18px); transition: opacity .7s ease, transform .7s ease; }
+  .reveal.in{ opacity:1; transform: translateY(0); }
+
+  @media (max-width: 760px){
+    .wrap{ padding: 0 20px; }
+    .why-grid, .criteria, .tracks{ grid-template-columns: 1fr; gap: 32px; }
+    .hero{ padding: 64px 0 52px; }
+    section{ padding: 56px 0; }
+    .form-card{ padding: 30px 22px; }
+  }
+
+  @media (prefers-reduced-motion: reduce){
+    *{ animation: none !important; transition: none !important; }
+    .reveal{ opacity:1; transform:none; }
+  }
+
+  :focus-visible{ outline: 2px solid var(--brass-bright); outline-offset: 2px; }
+</style>
+</head>
+<body>
+<div class="roster-bg"></div>
+
+<header>
+  <div class="wrap hero">
+    <div class="hero-rule-top">
+      <p class="eyebrow">Rede privada · acesso por convite</p>
+    </div>
+    <div class="hero-inner">
+      <h1>Uma nova forma de se conectar profissionalmente.</h1>
+      <p class="lede">Nem todo mundo precisa ter acesso. <strong>Uma rede profissional privada</strong> criada para aproximar empresas e profissionais selecionados, longe da lógica das plataformas abertas.</p>
+      <div class="stamp-line">
+        Aqui, o acesso não é simplesmente liberado para qualquer pessoa.
+        <span>É solicitado. É analisado. É limitado.</span>
+      </div>
+      <a href="#form" class="btn-seal">
+        Solicitar acesso
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4"><path d="M5 12h14M13 6l6 6-6 6"/></svg>
+      </a>
+      <div class="meta-row">VAGAS LIMITADAS — PRIMEIRA VERSÃO</div>
+    </div>
+  </div>
+</header>
+
+<main>
+
+  <section class="reveal">
+    <div class="wrap">
+      <div class="section-head">
+        <h2>Por que uma rede privada?</h2>
+        <span class="tag">O problema</span>
+      </div>
+      <div class="why-grid">
+        <p class="lead-quote">Quando todos têm acesso a tudo, a exclusividade desaparece.</p>
+        <div>
+          <p>Hoje, empresas e profissionais estão em plataformas onde milhares de pessoas e oportunidades estão disponíveis para todos.</p>
+          <p>Nossa proposta é diferente: criar um ambiente profissional onde qualidade, seleção e acesso controlado sejam parte da experiência — não um obstáculo a ela.</p>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <div class="callout reveal">
+    <div class="wrap">
+      <p class="small">Não é sobre ter mais conexões</p>
+      <h3>É sobre ter <em>as conexões certas</em>.</h3>
+    </div>
+  </div>
+
+  <section class="reveal">
+    <div class="wrap">
+      <div class="section-head">
+        <h2>Uma rede construída para aproximar dois lados.</h2>
+        <span class="tag">Como funciona</span>
+      </div>
+      <div class="tracks">
+        <div class="card">
+          <span class="punch l"></span><span class="punch r"></span>
+          <span class="card-tag">Empresas</span>
+          <h4>Acesso a profissionais selecionados <span class="arrow">→</span></h4>
+          <p>Encontre talento dentro de um ambiente com número limitado de membros, sem competir por atenção em meio a milhares de perfis abertos.</p>
+        </div>
+        <div class="card">
+          <span class="punch l"></span><span class="punch r"></span>
+          <span class="card-tag">Profissionais</span>
+          <h4>Acesso a oportunidades e empresas selecionadas <span class="arrow">→</span></h4>
+          <p>Faça parte de um ambiente onde presença é critério de qualidade, não volume — cercado por empresas também selecionadas.</p>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <section class="reveal">
+    <div class="wrap">
+      <div class="section-head">
+        <h2>Quem pode entrar?</h2>
+        <span class="tag">Seleção</span>
+      </div>
+      <div class="criteria">
+        <p class="big">Não estamos buscando milhares de usuários. Estamos buscando os usuários certos.</p>
+        <ul class="criteria-list">
+          <li><span class="mark">—</span> A primeira versão terá vagas limitadas para empresas e profissionais interessados em participar desde o início.</li>
+          <li><span class="mark">—</span> O preenchimento do formulário não garante a entrada.</li>
+          <li><span class="mark">—</span> Os primeiros membros serão selecionados de acordo com os critérios da rede.</li>
+        </ul>
+      </div>
+    </div>
+  </section>
+
+  <section class="form-section reveal" id="form">
+    <div class="wrap">
+      <div class="form-card">
+        <span class="ticket-notch l"></span><span class="ticket-notch r"></span>
+
+        <div class="form-fields" id="formFields">
+          <div class="form-head">
+            <p class="eyebrow" style="justify-content:center;">Quer fazer parte?</p>
+            <h3>Solicite seu acesso</h3>
+            <p>Estamos abrindo uma lista de interessados para a primeira versão. Se você acredita que uma rede profissional privada pode ser mais valiosa do que simplesmente estar em mais uma plataforma aberta, deixe seu interesse.</p>
+          </div>
+
+          <form id="accessForm" novalidate>
+
+            <div class="form-step" id="step1">
+              <div class="role-toggle">
+                <label><input type="radio" name="role" value="profissional" checked><span>Profissional</span></label>
+                <label><input type="radio" name="role" value="empresa"><span>Empresa</span></label>
+              </div>
+
+              <div class="field">
+                <label for="nome">Nome</label>
+                <input id="nome" type="text" placeholder="Seu nome completo" required>
+              </div>
+              <div class="field">
+                <label for="email">E-mail</label>
+                <input id="email" type="email" placeholder="voce@email.com" required>
+              </div>
+              <div class="field">
+                <label for="linkedin">LinkedIn</label>
+                <input id="linkedin" type="text" placeholder="linkedin.com/in/seu-perfil">
+              </div>
+
+              <div id="step1Error" class="form-error"></div>
+
+              <button type="button" id="toStep2Btn" class="btn-seal">
+                Continuar
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4"><path d="M5 12h14M13 6l6 6-6 6"/></svg>
+              </button>
+            </div>
+
+            <div class="form-step hide" id="step2">
+              <p class="step-eyebrow">Última etapa</p>
+
+              <div class="field-group">
+                <label class="group-label">Caso seja aprovado(a), você estaria disposto(a) a pagar pelo acesso à rede?</label>
+                <div class="pay-toggle">
+                  <label><input type="radio" name="willingness" value="sim" required><span>Sim</span></label>
+                  <label><input type="radio" name="willingness" value="talvez"><span>Talvez, dependendo do valor</span></label>
+                  <label><input type="radio" name="willingness" value="nao"><span>Não</span></label>
+                </div>
+              </div>
+
+              <div class="field hide" id="priceField">
+                <label for="fairPrice">Qual valor você consideraria justo pelo acesso?</label>
+                <input id="fairPrice" type="text" placeholder="Ex.: R$ 49/mês">
+              </div>
+
+              <div id="formError" class="form-error"></div>
+
+              <div class="step2-actions">
+                <button type="button" id="backToStep1Btn" class="btn-ghost">Voltar</button>
+                <button type="submit" class="btn-seal">
+                  Quero solicitar acesso
+                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4"><path d="M5 12h14M13 6l6 6-6 6"/></svg>
+                </button>
+              </div>
+            </div>
+
+          </form>
+
+          <div class="form-foot">
+            O acesso será limitado. Se houver interesse suficiente, os primeiros membros serão convidados para participar da primeira versão da rede. Você pode solicitar seu acesso agora.
+          </div>
+        </div>
+
+        <div class="confirm" id="confirmMsg">
+          <div class="check">
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6"><path d="M20 6L9 17l-5-5"/></svg>
+          </div>
+          <h4>Solicitação recebida.</h4>
+          <p>Seu pedido de acesso entrou na lista de análise. Se selecionado, você será convidado para a primeira versão da rede.</p>
+        </div>
+
+      </div>
+    </div>
+  </section>
+
+</main>
+
+<footer>
+  <div class="wrap">
+    <p>REDE PROFISSIONAL PRIVADA — ACESSO POR CONVITE</p>
+  </div>
+</footer>
+
+<script>
+  // Endereço do backend. Ao publicar, troque para a URL onde a API estiver hospedada
+  // (ex.: "https://sua-api.onrender.com"). Deixe vazio ("") para testar tudo na mesma origem.
+  const API_BASE_URL = "http://localhost:3001";
+
+  // Scroll reveal
+  const revealEls = document.querySelectorAll('.reveal');
+  const io = new IntersectionObserver((entries) => {
+    entries.forEach(e => { if (e.isIntersecting) { e.target.classList.add('in'); io.unobserve(e.target); } });
+  }, { threshold: 0.15 });
+  revealEls.forEach(el => io.observe(el));
+
+  // Navegação entre as etapas do formulário
+  const step1 = document.getElementById('step1');
+  const step2 = document.getElementById('step2');
+  const step1Error = document.getElementById('step1Error');
+  const priceField = document.getElementById('priceField');
+
+  document.getElementById('toStep2Btn').addEventListener('click', () => {
+    const nome = document.getElementById('nome');
+    const email = document.getElementById('email');
+    step1Error.style.display = 'none';
+
+    if (!nome.value.trim() || !email.value.trim() || !email.checkValidity()) {
+      step1Error.textContent = 'Preencha seu nome e um e-mail válido para continuar.';
+      step1Error.style.display = 'block';
+      return;
+    }
+
+    step1.classList.add('hide');
+    step2.classList.remove('hide');
+  });
+
+  document.getElementById('backToStep1Btn').addEventListener('click', () => {
+    step2.classList.add('hide');
+    step1.classList.remove('hide');
+  });
+
+  document.querySelectorAll('input[name="willingness"]').forEach(input => {
+    input.addEventListener('change', () => {
+      priceField.classList.toggle('hide', input.value === 'nao');
+    });
+  });
+
+  // Form submit — envia para o backend
+  const form = document.getElementById('accessForm');
+  const submitBtn = form.querySelector('#step2 .btn-seal');
+  const errorBox = document.getElementById('formError');
+
+  form.addEventListener('submit', async function(e){
+    e.preventDefault();
+    errorBox.style.display = 'none';
+
+    const willingnessInput = form.querySelector('input[name="willingness"]:checked');
+    if (!willingnessInput) {
+      errorBox.textContent = 'Selecione uma opção para continuar.';
+      errorBox.style.display = 'block';
+      return;
+    }
+
+    const nome = document.getElementById('nome').value.trim();
+    const email = document.getElementById('email').value.trim();
+    const linkedin = document.getElementById('linkedin').value.trim();
+    const role = form.querySelector('input[name="role"]:checked').value;
+    const willingness = willingnessInput.value;
+    const fairPrice = document.getElementById('fairPrice').value.trim();
+
+    const originalLabel = submitBtn.innerHTML;
+    submitBtn.disabled = true;
+    submitBtn.style.opacity = '0.7';
+    submitBtn.innerHTML = 'Enviando...';
+
+    try {
+      const res = await fetch(`${API_BASE_URL}/api/access-requests`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ nome, email, linkedin, role, willingness, fairPrice }),
+      });
+
+      const data = await res.json();
+
+      if (!res.ok) {
+        throw new Error(data.error || 'Não foi possível enviar sua solicitação.');
+      }
+
+      document.getElementById('formFields').classList.add('hide');
+      document.getElementById('confirmMsg').classList.add('show');
+    } catch (err) {
+      errorBox.textContent = err.message || 'Erro de conexão. Tente novamente em instantes.';
+      errorBox.style.display = 'block';
+      submitBtn.disabled = false;
+      submitBtn.style.opacity = '1';
+      submitBtn.innerHTML = originalLabel;
+    }
+  });
+</script>
+
+</body>
+</html>
